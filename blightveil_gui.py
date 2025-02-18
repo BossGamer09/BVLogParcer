@@ -10,6 +10,7 @@ import pystray
 from pystray import MenuItem as item
 import re
 
+show_parsed_only = True
 SC_LOG_LOCATION = None
 monitor_thread = None
 monitoring = False
@@ -17,10 +18,8 @@ monitoring = False
 # Helper function to handle resource paths dynamically
 def get_resource_path(filename):
     if getattr(sys, 'frozen', False):  # If the app is frozen (PyInstaller)
-        # PyInstaller creates a temp folder in _MEIPASS, where bundled files are extracted
         base_path = sys._MEIPASS
     else:
-        # If running in development mode, use the current directory
         base_path = os.path.dirname(__file__)
     return os.path.join(base_path, 'resources', filename)
 
@@ -66,41 +65,81 @@ def set_sc_log_location():
         update_status("Game.log not found.")
         return None
 
+
 # Function to parse log lines for specific events
 def parse_kill_line(line):
+    global show_parsed_only
+
     # Define patterns for the events to match
     vehicle_destroy_pattern = r"Vehicle '([^']+)'.*destroy level (\d+).*caused by '([^']+)'"
     actor_death_pattern = r"CActor::Kill: '([^']+)'.*killed by '([^']+)'.*using '([^']+)'"
     jump_drive_pattern = r"Changing state to (Idle|Active).*state to (Idle|Active)"
+    qt_pattern = r"Entity Trying To QT: '([^']+)"  # New pattern for Entity Trying To QT
+    transit_manager_pattern = r"TransitManager_([^_]+_[^_]+_\d+)"  # Match TransitManager log lines
+    door_state_pattern = r"(Opened|Closed):\s*(.*)"  # Match "Opened" or "Closed" state and door name
     
-    # Check for vehicle destruction
-    vehicle_match = re.search(vehicle_destroy_pattern, line)
-    if vehicle_match:
-        vehicle = vehicle_match.group(1)
-        destroy_level = vehicle_match.group(2)
-        caused_by = vehicle_match.group(3)
-        highlight_log(f"Vehicle Destruction: {vehicle} destroyed at level {destroy_level} by {caused_by}", 'red')
-        return
+    # If we are only showing parsed events, do not display full log
+    if show_parsed_only:
+        # Check for vehicle destruction
+        vehicle_match = re.search(vehicle_destroy_pattern, line)
+        if vehicle_match:
+            vehicle = vehicle_match.group(1)
+            destroy_level = vehicle_match.group(2)
+            caused_by = vehicle_match.group(3)
+            highlight_log(f"Vehicle Destruction: {vehicle} destroyed at level {destroy_level} by {caused_by}", 'red')
+            return
 
-    # Check for actor death
-    actor_death_match = re.search(actor_death_pattern, line)
-    if actor_death_match:
-        actor = actor_death_match.group(1)
-        killed_by = actor_death_match.group(2)
-        weapon = actor_death_match.group(3)
-        highlight_log(f"Actor Death: {actor} killed by {killed_by} using {weapon}", 'blue')
-        return
+        # Check for actor death
+        actor_death_match = re.search(actor_death_pattern, line)
+        if actor_death_match:
+            actor = actor_death_match.group(1)
+            killed_by = actor_death_match.group(2)
+            weapon = actor_death_match.group(3)
+            highlight_log(f"Actor Death: {actor} killed by {killed_by} using {weapon}", 'blue')
+            return
 
-    # Check for jump drive state change
-    jump_drive_match = re.search(jump_drive_pattern, line)
-    if jump_drive_match:
-        state_change = jump_drive_match.group(1)
-        new_state = jump_drive_match.group(2)
-        highlight_log(f"Jump Drive State Change: State changed to {new_state}", 'green')
-        return
+        # Check for jump drive state change
+        jump_drive_match = re.search(jump_drive_pattern, line)
+        if jump_drive_match:
+            state_change = jump_drive_match.group(1)
+            new_state = jump_drive_match.group(2)
+            highlight_log(f"Jump Drive State Change: State changed to {new_state}", 'green')
+            return
 
-    # If no match, just log normally
+        # Check for "Entity Trying To QT"
+        qt_match = re.search(qt_pattern, line)
+        if qt_match:
+            entity_name = qt_match.group(1)
+            highlight_log(f"Entity Trying To QT: {entity_name}", 'purple')  # Purple color for QT entries
+            return
+
+        # Check for TransitManager logs (flag of elevator)
+        transit_manager_match = re.search(transit_manager_pattern, line)
+        if transit_manager_match:
+            manager_id = transit_manager_match.group(1)
+            highlight_log(f"TransitManager: {manager_id}", 'orange')  # Highlight TransitManager logs with orange
+            return
+
+        # Check for door state (Opened/Closed)
+        door_state_match = re.search(door_state_pattern, line)
+        if door_state_match:
+            door_state = door_state_match.group(1)
+            door_name = door_state_match.group(2)
+            highlight_log(f"Elevator Door {door_state}: {door_name}", 'yellow')  # Yellow color for door state changes
+            return
+
+    # If not in parsed-only mode, display full log
     update_status(f"Log: {line.strip()}")
+
+# Function to toggle between showing parsed events or full log
+def toggle_parsed_only():
+    global show_parsed_only
+    show_parsed_only = not show_parsed_only
+    if show_parsed_only:
+        update_status("Switched to parsed events only.")
+    else:
+        update_status("Showing full log again.")
+
 
 # Function to highlight specific log messages
 def highlight_log(message, color):
@@ -194,13 +233,11 @@ root.configure(bg="#1e1e1e")
 ico_path, banner_path = setup_resources()
 
 if ico_path:
-    # Load icon for taskbar
     image = Image.open(ico_path)
     tray_icon = pystray.Icon("BlightVeil", image, menu=(item('Open', lambda: root.deiconify()), item('Exit', exit_app)))
     threading.Thread(target=tray_icon.run, daemon=True).start()
 
 if banner_path:
-    # Load banner image
     banner = Image.open(banner_path)
     banner = banner.resize((480, 100), Image.LANCZOS)
     banner_img = ImageTk.PhotoImage(banner)
@@ -216,6 +253,7 @@ def setup_highlight_tags():
     status_text.tag_configure('red', foreground='red')
     status_text.tag_configure('blue', foreground='blue')
     status_text.tag_configure('green', foreground='green')
+    status_text.tag_configure('yellow', foreground='yellow')
 
 setup_highlight_tags()  # Call this once in the setup
 
@@ -231,6 +269,9 @@ stop_button.pack(pady=5)
 
 exit_button = tk.Button(root, text="Exit", command=on_closing, **button_style)
 exit_button.pack(pady=5)
+
+toggle_button = tk.Button(root, text="Toggle Log Mode", command=toggle_parsed_only, **button_style)
+toggle_button.pack(pady=5)
 
 # Close window by hiding (minimizing to tray) and stopping the background processes
 root.protocol("WM_DELETE_WINDOW", on_closing)
