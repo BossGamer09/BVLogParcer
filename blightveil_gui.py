@@ -95,7 +95,7 @@ def parse_kill_line(line):
             actor = actor_death_match.group(1)
             killed_by = actor_death_match.group(2)
             weapon = actor_death_match.group(3)
-            highlight_log(f"Actor Death: {actor} killed by {killed_by} using {weapon}", 'blue')
+            highlight_log(f"Actor Death: {actor} killed by {killed_by} using {weapon}", 'purple')
             return
 
         # Check for jump drive state change
@@ -254,6 +254,7 @@ def setup_highlight_tags():
     status_text.tag_configure('blue', foreground='blue')
     status_text.tag_configure('green', foreground='green')
     status_text.tag_configure('yellow', foreground='yellow')
+    status_text.tag_configure('purple', foreground='purple')
 
 setup_highlight_tags()  # Call this once in the setup
 
