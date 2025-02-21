@@ -1,3 +1,4 @@
+zone_mappings = {
     "p2l4_contestedzone": "Contested Zone",
     "ObjectContainer-0002_INT": "Prison",
     "OOC_Stanton_2a_Cellin": "Security Post Kareah",
@@ -10,3 +11,4 @@
     "Hangar_SmallFront_RestStop_Pyro": "Elevator PVP",
     "rs_int_p3l1": "Starlight Station PVP",
     "RastarInteriorGridHost": "Outpost Buildings",
+}
