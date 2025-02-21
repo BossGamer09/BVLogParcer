@@ -5,6 +5,7 @@ import sys
 import time
 import json
 import psutil
+import pygame
 import pystray
 import requests
 import threading
@@ -16,6 +17,7 @@ from tkinter import messagebox, scrolledtext
 # Global variables
 show_parsed_only = True
 debug_mode = False
+pygame.mixer.init()
 last_log = {}
 contested_elevator_tracking = {}  # Dictionary to track carriages
 elevator_door_states = {}  # Dictionary to track door open/close state
@@ -100,48 +102,52 @@ def parse_contested_zone_elevator(line):
                         elevator_door_states[manager_id] = 'opened'
                         print(f"Event: {manager_id} Opened for the first time")
                         highlight_log(f"🚪 **Elevator Opened**: {manager_id}", 'yellow')
-                        flash_icon("TransitDungeon_Exfil", icon_positions)
 
                 elif "Closed:" in line:
                     if manager_id in elevator_door_states and elevator_door_states[manager_id] != 'closed':
                         elevator_door_states[manager_id] = 'closed'
                         print(f"Event: {manager_id} Closed")
                         highlight_log(f"🚪 **Elevator Closed**: {manager_id}", 'yellow')
-                        flash_icon("TransitDungeonRewardRoom", icon_positions)
 
         # Handle exiting the contested zone (Exfil event)
         if "TransitDungeonExfil" in line:
             print("Event: TransitDungeonExfil")  # Debug: print event name
             highlight_log(f"🚪 **Exit Notice**: Someone has exited the Contested Zone (CZ)", 'red')
             flash_icon("TransitDungeon_Exfil", icon_positions)
+            play_sound("actor_death")  # Play death sound for exfil event
 
         # Handle loot room (Reward Room) events
         if "TransitDungeonRewardRoom_" in line:
             print("Event: TransitDungeonRewardRoom")  # Debug: print event name
             highlight_log(f"💎 **Loot Room Alert**: Someone is in a Loot Room", 'yellow')
             flash_icon("TransitDungeonRewardRoom", icon_positions)
+            play_sound("reward_room")  # Play sound for reward room alert
 
         # Handle each elevator type using simple if statements
         if "TransitDungeonSideEntrance" in line:
             print("Event: TransitDungeonSideEntrance")  # Debug: print event name
             highlight_log(f"🚪 **Side Entrance Alert**: Someone is at the Side Entrance", 'red')
             flash_icon("TransitDungeonSideEntrance", icon_positions)
+            play_sound("side_main")  # Play sound for side entrance
 
         if "TransitDungeonMainEntrance" in line:
             print("Event: TransitDungeonMainEntrance")  # Debug: print event name
             highlight_log(f"🚪 **Main Entrance Alert**: Someone is at the Main Entrance", 'red')
             flash_icon("TransitDungeonMainEntrance", icon_positions)
+            play_sound("side_main")  # Play sound for main entrance
 
         if "TransitDungeonMaintenance" in line:
             print("Event: TransitDungeonMaintenance")  # Debug: print event name
             highlight_log(f"🚪 **Maintenance Alert**: Someone is at the Maintenance Entrance", 'orange')
             flash_icon("TransitDungeonMaintenance_1", icon_positions)
             flash_icon("TransitDungeonMaintenance_2", icon_positions)
+            play_sound("side_main")  # Play sound for maintenance entrance
 
         if "TransitDungeonRewardRoom" in line:
             print("Event: TransitDungeonRewardRoom")  # Debug: print event name
             highlight_log(f"💎 **Loot Room Alert**: Someone is in a Loot Room", 'yellow')
             flash_icon("TransitDungeonRewardRoom", icon_positions)
+            play_sound("reward_room")  # Play sound for loot room
 
 # Function to flash icons on the map for specific events
 def flash_icon(event_name, icon_positions):
@@ -397,6 +403,23 @@ def get_version_file(file_name, url):
         print(f"❗ {file_name} not found. Falling back to URL.")
         return get_version_url(url)
 
+def play_sound(sound_type, volume=1.0):
+    if sound_type == "side_main":
+        sound_path = get_resource_path("doorbell-1.wav")
+        sound = pygame.mixer.Sound(sound_path)
+        sound.set_volume(volume)
+        sound.play()
+    elif sound_type == "reward_room":
+        sound_path = get_resource_path("ALARM_BUZZ_bbi.wav")
+        sound = pygame.mixer.Sound(sound_path)
+        sound.set_volume(volume)
+        sound.play()
+    elif sound_type == "actor_death":
+        sound_path = get_resource_path("Wasted.wav")
+        sound = pygame.mixer.Sound(sound_path)
+        sound.set_volume(volume)
+        sound.play()
+
 # Function to get the version from a URL
 def get_version_url(url):
     try:
@@ -455,12 +478,22 @@ def handle_checkmate():
     icons = {}
     for name, (x, y, color) in icon_positions.items():
         icons[name] = canvas.create_oval(x-10, y-10, x+10, y+10, fill=color, outline="white", width=2)
-    checkmate_button.config(state=tk.DISABLED)  # Disable the button after use
 
+    checkmate_button.config(state=tk.DISABLED)  # Disable the button after use
+    
+    # Re-enable the button after a delay
+    checkmate_window.protocol("WM_DELETE_WINDOW", lambda: on_checkmate_close())
+    
+    def on_checkmate_close():
+        """Handle the action when the Checkmate window is closed."""
+        checkmate_window.destroy()  # Use destroy instead of close
+        checkmate_button.config(state=tk.NORMAL)  # Re-enable the button
+        update_status("Checkmate window closed.")
+    
 # Initialize GUI with dark mode
 root = tk.Tk()
 root.title("BlightVeil Log Parser")
-root.geometry("500x350")
+root.geometry("650x850")
 root.configure(bg="#1e1e1e")
 
 # Setup icon and banner resources
