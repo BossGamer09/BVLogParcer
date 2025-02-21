@@ -406,21 +406,23 @@ def get_version_file(file_name, url):
         return get_version_url(url)
 
 def play_sound(sound_type, volume=1.0):
-    if sound_type == "side_main":
-        sound_path = get_resource_path("doorbell-1.wav")
-        sound = pygame.mixer.Sound(sound_path)
-        sound.set_volume(volume)
-        sound.play()
-    elif sound_type == "reward_room":
-        sound_path = get_resource_path("ALARM_BUZZ_bbi.wav")
-        sound = pygame.mixer.Sound(sound_path)
-        sound.set_volume(volume)
-        sound.play()
-    elif sound_type == "actor_death":
-        sound_path = get_resource_path("Wasted.wav")
-        sound = pygame.mixer.Sound(sound_path)
-        sound.set_volume(volume)
-        sound.play()
+    # Check if the Checkmate window is open before playing the sound
+    if checkmate_window.winfo_exists():
+        if sound_type == "side_main":
+            sound_path = get_resource_path("doorbell-1.wav")
+            sound = pygame.mixer.Sound(sound_path)
+            sound.set_volume(volume)
+            sound.play()
+        elif sound_type == "reward_room":
+            sound_path = get_resource_path("ALARM_BUZZ_bbi.wav")
+            sound = pygame.mixer.Sound(sound_path)
+            sound.set_volume(volume)
+            sound.play()
+        elif sound_type == "actor_death":
+            sound_path = get_resource_path("Wasted.wav")
+            sound = pygame.mixer.Sound(sound_path)
+            sound.set_volume(volume)
+            sound.play()
 
 # Function to get the version from a URL
 def get_version_url(url):
