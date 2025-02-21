@@ -1,4 +1,4 @@
-zone_mappings = {
+{
     "p2l4_contestedzone": "Contested Zone",
     "ObjectContainer-0002_INT": "Prison",
     "OOC_Stanton_2a_Cellin": "Security Post Kareah",
