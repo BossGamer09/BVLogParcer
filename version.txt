@@ -1,0 +1,24 @@
+# UTF-8
+# BlightVeil version information
+
+[Version]
+FileDescription=Blightveil Star Citizen ORG https://discord.gg/BlightVeil
+ProductName=BlightVeil Log Parser
+ProductVersion=1.0.0
+FileVersion=1.0.0
+CompanyName=Blightveil Development Team
+Copyright=Copyright © 2025 Blightveil Inc. All rights reserved. 
+OriginalFilename=blightveil_gui.exe
+InternalName=BlightveilLogParser
+FileFlags=0x0
+FileOS=0x4
+FileType=0x2
+Language=English (United States)
+PrivateBuild=No
+SpecialBuild=No
+
+[Strings]
+FileDescription=Blightveil Development Team
+ProductName=BlightVeil Log Parser
+ProductVersion=1.0.0
+FileVersion=1.0.0
