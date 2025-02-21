@@ -1,0 +1,14 @@
+{
+    "p2l4_contestedzone": "Contested Zone",
+    "ObjectContainer-0002_INT": "Prison",
+    "OOC_Stanton_2a_Cellin": "Security Post Kareah",
+    "ab_pyro_int_dung": "Security Keycard Zone P3L4",
+    "rs_opendungeon_rund": "Ruin Contested Zone Ghost Arena",
+    "p5l2_contestedzone": "Ruin Contested Zone",
+    "ab_pyro_int_dung_exec": "Executive Hangers",
+    "TransitCarriage_Reststop_Small": "Elevator Combat",
+    "Hangar_MediumFront_RestStop_Pyro": "Elevator PVP",
+    "Hangar_SmallFront_RestStop_Pyro": "Elevator PVP",
+    "rs_int_p3l1": "Starlight Station PVP",
+    "RastarInteriorGridHost": "Outpost Buildings"
+}
