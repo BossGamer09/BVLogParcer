@@ -14,7 +14,7 @@ FileFlags=0x0
 FileOS=0x4
 FileType=0x2
 Language=English (United States)
-PrivateBuild=No
+PrivateBuild=Yes (Just while its being tested)
 SpecialBuild=No
 
 [Strings]
