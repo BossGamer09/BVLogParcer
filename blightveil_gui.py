@@ -25,7 +25,7 @@ monitor_thread = None
 monitoring = True
 # URL for dynamic zone mappings
 zone_mappings_url = "https://raw.githubusercontent.com/BossGamer09/BVLogParcer/refs/heads/main/zone_mappings.json"
-
+get_version_ur = "https://raw.githubusercontent.com/BossGamer09/BVLogParcer/refs/heads/main/version.txt"
 # Initialize zone_mappings dictionary
 zone_mappings = {}
 # Global variables
@@ -66,7 +66,7 @@ def set_sc_log_location():
 
     sc_launcher_path = check_if_process_running("StarCitizen")
     if not sc_launcher_path:
-        update_status("Star Citizen Launcher not running.")
+        update_status("Star Citizen not running.")
         print("Star Citizen Launcher not found.")
         return None
 
@@ -175,7 +175,6 @@ def fetch_zone_mappings():
         response = requests.get(zone_mappings_url)  # Only call this once
 
         if response.status_code == 200:
-            print(f"Raw data from URL: {response.text}")  # Add this line to print the raw response
             zone_mappings = ast.literal_eval(response.text)
 
             # Debug: print the mappings to check if they are parsed correctly
@@ -312,32 +311,39 @@ def tail_log(log_file_location, flash_icon, icon_positions):
 def start_monitoring(flash_icon=None, icon_positions=None):
     global monitoring, monitor_thread
 
-    # Display connecting message
-    update_status("Connecting to fetch zone mappings...")
+    # Disable the Start button to prevent multiple clicks
+    start_button.config(state=tk.DISABLED)
 
-    if monitoring:
-        return
+    # Start the monitoring in a separate thread to keep the GUI responsive
+    def monitor_thread_func():
+        # Display connecting message
+        update_status("Connecting to fetch zone mappings...")
 
-    # Start the zone mapping fetch operation
-    fetch_zone_mappings()  # Fetch zone mappings
+        # Fetch zone mappings in a separate thread
+        fetch_zone_mappings()
 
-    if not zone_mappings:  # Check if zone mappings were successfully fetched
-        update_status("Error: Zone mappings could not be loaded.")
-        return
+        if not zone_mappings:  # Check if zone mappings were successfully fetched
+            update_status("Error: Zone mappings could not be loaded.")
+            start_button.config(state=tk.NORMAL)  # Re-enable Start button
+            return
 
-    # Zone mappings fetched successfully, proceed with log monitoring
-    log_file = set_sc_log_location()  # This will now return the log path
-    if log_file:
-        monitoring = True
-        monitor_thread = threading.Thread(target=tail_log, args=(log_file, flash_icon, icon_positions), daemon=True)
-        monitor_thread.start()
-        update_status("Monitoring started.")
-        
-        # Enable the buttons once everything is set up
-        start_button.config(state=tk.DISABLED)  # Disable the Start button once monitoring starts
-        stop_button.config(state=tk.NORMAL)     # Enable the Stop button
-    else:
-        messagebox.showerror("Error", "Game.log not found.")
+        # Zone mappings fetched successfully, proceed with log monitoring
+        log_file = set_sc_log_location()  # This will now return the log path
+        if log_file:
+            monitoring = True
+            monitor_thread = threading.Thread(target=tail_log, args=(log_file, flash_icon, icon_positions), daemon=True)
+            monitor_thread.start()
+            update_status("Monitoring started.")
+
+            # Enable the buttons once everything is set up
+            stop_button.config(state=tk.NORMAL)     # Enable the Stop button
+            checkmate_button.config(state=tk.NORMAL)  # Enable the Checkmate button
+        else:
+            messagebox.showerror("Error", "Game.log not found.")
+            start_button.config(state=tk.NORMAL)  # Re-enable Start button
+
+    # Run the monitor thread function asynchronously
+    threading.Thread(target=monitor_thread_func, daemon=True).start()
 
 # Function to stop monitoring
 def stop_monitoring():
@@ -382,6 +388,28 @@ def exit_app():
     stop_monitoring()
     root.quit()
 
+# Function to get the version from a local file, fallback to URL if file is not found
+def get_version_file(file_name, url):
+    try:
+        with open(file_name, 'r') as f:
+            return f.read().strip()
+    except FileNotFoundError:
+        print(f"❗ {file_name} not found. Falling back to URL.")
+        return get_version_url(url)
+
+# Function to get the version from a URL
+def get_version_url(url):
+    try:
+        response = requests.get(url)
+        if response.status_code == 200:
+            return response.text.strip()
+        else:
+            print(f"❗ Error fetching version from URL: {response.status_code}")
+            return "Version information unavailable"
+    except requests.RequestException as e:
+        print(f"❗ Error fetching version from URL: {e}")
+        return "Version information unavailable"
+
 # Setup resources (icon and banner)
 def setup_resources():
     ico_path = get_resource_path("BlightVeil.ico")
@@ -392,9 +420,16 @@ def setup_resources():
         print("Banner image not found:", banner_path)
     return ico_path, banner_path
 
+    # Fetch and display the version information
+    version = get_version_file('version.txt')
+    if version:
+        update_status(f"🔧 BlightVeil Version: {version}")
+    else:
+        update_status("❗ Version information not found")
+
 def handle_checkmate():
     """Handle the action when the Checkmate button is clicked."""
-    update_status("🎮 **Checkmate Selected**: Opening Checkmate window.")
+    update_status("Checkmate Selected")
     
     global checkmate_window, canvas, icons, map_photo
     checkmate_window = tk.Toplevel(root)
@@ -412,7 +447,7 @@ def handle_checkmate():
     # Create canvas and draw image
     canvas = tk.Canvas(checkmate_window, width=800, height=600)
     canvas.pack(fill=tk.BOTH, expand=True)
-
+    
     # Use create_image to add the image to the canvas
     canvas.create_image(400, 300, anchor=tk.CENTER, image=map_photo)  # Center the image
 
@@ -420,11 +455,7 @@ def handle_checkmate():
     icons = {}
     for name, (x, y, color) in icon_positions.items():
         icons[name] = canvas.create_oval(x-10, y-10, x+10, y+10, fill=color, outline="white", width=2)
-
-    update_status("🗺️ **Map Loaded**: Icons are now active.")
-    
-    # Pass the required arguments when calling start_monitoring
-    start_monitoring(flash_icon)  # Now it correctly receives `flash_icon`
+    checkmate_button.config(state=tk.DISABLED)  # Disable the button after use
 
 # Initialize GUI with dark mode
 root = tk.Tk()
@@ -451,22 +482,41 @@ if banner_path:
 status_text = scrolledtext.ScrolledText(root, height=8, wrap=tk.WORD, fg="white", bg="#252526", state=tk.DISABLED)
 status_text.pack(pady=10, padx=10, fill=tk.BOTH, expand=True)
 
+# Fetch version from file or URL
+version = get_version_file('version.txt', 'https://raw.githubusercontent.com/BossGamer09/BVLogParcer/refs/heads/main/version.txt')
+if version:
+    update_status(f"🔧 BlightVeil Version: {version}")
+else:
+    update_status("❗ Version information not found")
+
 # Set up text highlighting for different log types
 setup_highlight_tags()  # <-- Make sure to call this function to set up the tags
 
-# Buttons to start and stop monitoring
-start_button = tk.Button(root, text="Start Monitoring", command=start_monitoring, bg="#0078D4", fg="white")
-start_button.pack(pady=5)
-stop_button = tk.Button(root, text="Stop Monitoring", command=stop_monitoring, bg="#D32F2F", fg="white")
-stop_button.pack(pady=5)
+# Frame for the buttons to control their placement
+button_frame = tk.Frame(root, bg="#1e1e1e")
+button_frame.pack(pady=10)
 
-# Button to open the Checkmate map
+# Buttons to start and stop monitoring
+start_button = tk.Button(button_frame, text="Start Monitoring", command=start_monitoring, bg="#0078D4", fg="white")
+start_button.pack(side=tk.LEFT, padx=5)
+
+toggle_button = tk.Button(button_frame, text="Toggle Parsed Log", command=toggle_parsed_only, bg="#6200EE", fg="white")
+toggle_button.pack(side=tk.LEFT, padx=5)
+
+stop_button = tk.Button(button_frame, text="Stop Monitoring", command=stop_monitoring, bg="#D32F2F", fg="white")
+stop_button.pack(side=tk.LEFT, padx=5)
+stop_button.config(state=tk.DISABLED)  # Initially disable the Stop button
+
+# Button to open the Checkmate map below the other buttons
 checkmate_button = tk.Button(root, text="Open Checkmate Map", command=handle_checkmate, bg="#4CAF50", fg="white")
 checkmate_button.pack(pady=5)
-
-# Toggle between parsed or full log
-toggle_button = tk.Button(root, text="Toggle Parsed Log", command=toggle_parsed_only, bg="#6200EE", fg="white")
-toggle_button.pack(pady=5)
+checkmate_button.config(state=tk.DISABLED)  # Enable the button
 
 root.protocol("WM_DELETE_WINDOW", on_closing)  # Ensure we handle the window close event
+
 root.mainloop()
+# Stop monitoring when the main loop ends
+stop_monitoring()
+# Exit the application
+sys.exit()
+# End of the script
