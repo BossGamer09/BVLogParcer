@@ -4,10 +4,10 @@
 [Version]
 FileDescription=Blightveil Star Citizen ORG https://discord.gg/BlightVeil
 ProductName=BlightVeil Log Parser
-ProductVersion=1.0.0
-FileVersion=1.0.0
+ProductVersion=1.2.0
+FileVersion=1.2.0
 CompanyName=Blightveil Development Team
-Copyright=Copyright © 2025 Blightveil Inc. All rights reserved. 
+Copyright=Copyright © 2025 Blightveil Inc. All rights reserved.
 OriginalFilename=blightveil_gui.exe
 InternalName=BlightveilLogParser
 FileFlags=0x0
@@ -20,5 +20,19 @@ SpecialBuild=No
 [Strings]
 FileDescription=Blightveil Development Team
 ProductName=BlightVeil Log Parser
-ProductVersion=1.0.0
-FileVersion=1.0.0
+ProductVersion=1.2.0
+FileVersion=1.2.0
+
+[Changelog]
+Version 1.2.0 - Released 2025-02-21
+- Added Quantum Travel notifications and sound alerts.
+- Improved the Checkmate map interaction with noise alerts, only triggering when the map is open.
+- Fixed issue with incorrect event parsing in contested zone elevators.
+- Optimized performance for zone mapping and event handling.
+
+Version 1.1.0 - Released 2025-02-10
+- Initial release with basic kill tracking and elevator event handling.
+
+Version 1.0.0 - Released 2025-01-30
+- First public release.
+
