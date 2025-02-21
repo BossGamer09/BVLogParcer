@@ -184,7 +184,7 @@ def fetch_zone_mappings():
             zone_mappings = ast.literal_eval(response.text)
 
             # Debug: print the mappings to check if they are parsed correctly
-            update_status(f"Successfully fetched zone mappings")
+            update_status(f"Zone mappings: {zone_mappings}")
         else:
             update_status(f"Error fetching zone mappings. Status Code: {response.status_code}")
     
@@ -192,13 +192,14 @@ def fetch_zone_mappings():
         update_status(f"Error loading zone mappings: {e}")
 
 def parse_kill_line(line, flash_icon, icon_positions):
+    print(f"Parsing line: {line}")
     global show_parsed_only
     global zone_mappings
 
     patterns = {
         "vehicle_destroy": r"Destruction> CVehicle::OnAdvanceDestroyLevel: Vehicle '([^']+)' \[([^\]]+)\] in zone '([^']+)' .*caused by '([^']+)' \[([^\]]+)\] with '([^']+)'",  # Adjusted pattern for vehicle destruction
-        "actor_death": r"CActor::Kill: '([^']+)' \[([^\]]+)\] in zone '([^']+)' killed by '([^']+)' \[([^\]]+)\] using '([^']+)'",  # Adjusted pattern for actor death
-        "qt": r"Entity Trying To QT: '([^']+)",  # Pattern for QT event
+        "actor_death": r"CActor::Kill: '([^']+)' \[([^\]]+)\] in zone '([^']+)' killed by '([^']+)' \[([^\]]+)\] using '([^']+)' \[([^']+)\] with damage type '([^']+)'",  # Updated pattern for actor death
+        "qt": r".*-- Entity Trying To QT: ([^\s]+)",  # Adjusted
     }
 
     parse_contested_zone_elevator(line)
@@ -210,26 +211,28 @@ def parse_kill_line(line, flash_icon, icon_positions):
             if key == "actor_death":
                 actor_name = match.group(1)
                 actor_id = match.group(2)  # Actor ID captured from the log
-                zone = match.group(3)  
+                zone = match.group(3)
                 killer_name = match.group(4)
                 killer_id = match.group(5)  # Killer ID captured from the log
                 weapon = match.group(6)  # Weapon used in the death
+                class_unknown = match.group(7)  # The class is captured
+                damage_type = match.group(8)  # Damage type captured
 
-                # Check if the actor or killer is PU_Human
-                if actor_name == "PU_Human" or killer_name == "PU_Human":
-                    # If PU_Human is involved, log the kill event
-                    print(f"Captured kill: {actor_name} ({actor_id}) killed by {killer_name} ({killer_id}) with {weapon} in zone {zone}")
+                # Check if the actor or killer is PU_Human and avoid logging if PU_Human kills PU_Human
+                if actor_name == "PU_Human" and killer_name == "PU_Human":
+                    # Ignore this case (no logging)
+                    continue
+                else:
+                    # Log the event if PU_Human is involved but not killing another PU_Human
+                    print(f"Captured kill: {actor_name} ({actor_id}) killed by {killer_name} ({killer_id}) using {weapon} with damage type {damage_type} in zone {zone}")
 
                     # Ensure the zone name is mapped correctly
                     zone_name = zone_mappings.get(zone, zone)  # Use zone from mapping or default to the zone itself
                     print(f"Mapped zone: {zone_name}")  # Debug print for zone mapping
 
-                    highlight_log(f"💀 **Actor Death**: {actor_name} killed by {killer_name} using {weapon} in zone {zone_name}", 'purple')
-                else:
-                    # Ignore all kills/deaths involving PU_Human (no logging)
-                    continue
+                    highlight_log(f"💀 **Actor Death**: {actor_name} killed by {killer_name} using {weapon} with damage type {damage_type} in zone {zone_name}", 'purple')
 
-            elif key == "vehicle_destroy":
+            if key == "vehicle_destroy":
                 vehicle_name = match.group(1)
                 vehicle_id = match.group(2)  # Vehicle ID captured from the log
                 zone = match.group(3)
@@ -246,15 +249,11 @@ def parse_kill_line(line, flash_icon, icon_positions):
                     print(f"Mapped zone: {zone_name}")  # Debug print for zone mapping
 
                     highlight_log(f"🚗 **Vehicle Destruction**: {vehicle_name} destroyed by {destroyer_name} due to {destruction_type} in zone {zone_name}", 'red')
-
-            elif key == "qt":
+            if key == "qt":
                 entity_name = match.group(1)  # Entity attempting to Quantum Travel
-                print(f"Entity trying to QT: {entity_name}")
-
-                # Log the Quantum Travel attempt
-                highlight_log(f"🚀 **Quantum Travel**: {entity_name} trying to QT", 'blue')
-
-# Function to toggle between showing parsed events or full log
+                print(f"Entity trying to QT: {entity_name}")  # Debugging QT capture
+                highlight_log(f"🚀 **Quantum Travel**: {entity_name} trying to QT", 'blue')        
+            
 def toggle_parsed_only():
     global show_parsed_only
     show_parsed_only = not show_parsed_only
@@ -265,7 +264,7 @@ def setup_highlight_tags():
         'red': 'Vehicle Destruction',
         'purple1': 'Actor Death',
         'green': 'Jump Drive State Change',
-        'purple2': 'Entity Trying To QT',
+        'blue': 'Entity Trying To QT',
         'orange': 'Contested Zone Elevator',
         'yellow': 'Elevator Door State'
     }
@@ -287,6 +286,8 @@ def highlight_log(message, color):
         tag = 'orange'
     elif color == 'yellow':
         tag = 'yellow'
+    elif color == 'blue':
+        tag = 'blue'
     else:
         tag = None  # No tag if color is not recognized
 
@@ -300,6 +301,7 @@ def highlight_log(message, color):
         status_text.yview(tk.END)
 
     status_text.after(0, insert_message)  # Schedule the update on the main thread
+    print(f"Highlighting log: {message}")
 
 # Function to tail the Game.log file and parse the lines
 def tail_log(log_file_location, flash_icon, icon_positions):
