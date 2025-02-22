@@ -31,19 +31,30 @@ get_version_ur = "https://raw.githubusercontent.com/BossGamer09/BVLogParcer/refs
 # Initialize zone_mappings dictionary
 zone_mappings = {}
 # Global variables
-icon_positions = {
-    "TransitDungeon_Exfil": (380, 169, "green"),
-    "TransitDungeonRewardRoom": (249, 241, "yellow"),
-    "TransitDungeonSideEntrance": (533, 77, "red"),
-    "TransitDungeonMainEntrance": (729, 272, "red"),
-    "TransitDungeonMaintenance_1": (554, 151, "orange"),
-    "TransitDungeonMaintenance_2": (656, 291, "orange"),
+checkmate_icon_positions = {
+    "Chek_TransitDungeon_Exfil": (380, 169, "green"),
+    "Chek_TransitDungeonRewardRoom": (249, 241, "yellow"),
+    "Chek_TransitDungeonSideEntrance": (533, 77, "red"),
+    "Chek_TransitDungeonMainEntrance": (729, 272, "red"),
+    "Chek_TransitDungeonMaintenance_1": (554, 151, "orange"),
+    "Chek_TransitDungeonMaintenance_2": (656, 291, "orange"),
+}
+
+obituary_icon_positions = {
+    "Orb_TransitDungeon_Exfil": (375, 212, "green"),
+    "Orb_TransitDungeonRewardRoom": (537, 37, "yellow"),
+    "Orb_TransitDungeonEntranceC": (352, 491, "red"),
+    "Orb_TransitDungeonEntranceB": (620, 346, "red"),
+    "Orb_TransitDungeonEntranceA": (273, 351, "red"),
+    "Orb_TransitDungeonMaintenance": (415, 508, "orange"),
 }
 
 # Helper function to handle resource paths dynamically
 def get_resource_path(filename):
     base_path = sys._MEIPASS if getattr(sys, 'frozen', False) else os.path.dirname(__file__)
-    return os.path.join(base_path, 'resources', filename)
+    resource_path = os.path.join(base_path, 'resources', filename)
+    print(f"Looking for resource at: {resource_path}")  # Debugging line
+    return resource_path
 
 # Function to check if a process is running
 def check_if_process_running(process_name):
@@ -113,41 +124,91 @@ def parse_contested_zone_elevator(line):
         if "TransitDungeonExfil" in line:
             print("Event: TransitDungeonExfil")  # Debug: print event name
             highlight_log(f"🚪 **Exit Notice**: Someone has exited the Contested Zone (CZ)", 'red')
-            flash_icon("TransitDungeon_Exfil", icon_positions)
+            flash_icon("Chek_TransitDungeon_Exfil", checkmate_icon_positions)
             play_sound("actor_death")  # Play death sound for exfil event
 
         # Handle loot room (Reward Room) events
         if "TransitDungeonRewardRoom_" in line:
             print("Event: TransitDungeonRewardRoom")  # Debug: print event name
             highlight_log(f"💎 **Loot Room Alert**: Someone is in a Loot Room", 'yellow')
-            flash_icon("TransitDungeonRewardRoom", icon_positions)
+            flash_icon("Chek_TransitDungeonRewardRoom", checkmate_icon_positions)
             play_sound("reward_room")  # Play sound for reward room alert
 
         # Handle each elevator type using simple if statements
         if "TransitDungeonSideEntrance" in line:
             print("Event: TransitDungeonSideEntrance")  # Debug: print event name
             highlight_log(f"🚪 **Side Entrance Alert**: Someone is at the Side Entrance", 'red')
-            flash_icon("TransitDungeonSideEntrance", icon_positions)
+            flash_icon("Chek_TransitDungeonSideEntrance", checkmate_icon_positions)
             play_sound("side_main")  # Play sound for side entrance
 
         if "TransitDungeonMainEntrance" in line:
             print("Event: TransitDungeonMainEntrance")  # Debug: print event name
             highlight_log(f"🚪 **Main Entrance Alert**: Someone is at the Main Entrance", 'red')
-            flash_icon("TransitDungeonMainEntrance", icon_positions)
+            flash_icon("Chek_TransitDungeonMainEntrance", checkmate_icon_positions)
             play_sound("side_main")  # Play sound for main entrance
 
         if "TransitDungeonMaintenance" in line:
             print("Event: TransitDungeonMaintenance")  # Debug: print event name
             highlight_log(f"🚪 **Maintenance Alert**: Someone is at the Maintenance Entrance", 'orange')
-            flash_icon("TransitDungeonMaintenance_1", icon_positions)
-            flash_icon("TransitDungeonMaintenance_2", icon_positions)
+            flash_icon("Chek_TransitDungeonMaintenance_1", checkmate_icon_positions)
             play_sound("side_main")  # Play sound for maintenance entrance
+        
+        if "TransitDungeonExfil" in line:
+            print("Event: TransitDungeonExfil")  # Debug: print event name
+            highlight_log(f"🚪 **Exit Notice**: Someone has exited the Contested Zone (CZ)", 'red')
+            flash_icon("Orb_TransitDungeon_Exfil", obituary_icon_positions)
+            play_sound("actor_death")  # Play death sound for exfil event
 
-        if "TransitDungeonRewardRoom" in line:
+        # Handle loot room (Reward Room) events
+        if "TransitDungeonRewardRoom_" in line:
             print("Event: TransitDungeonRewardRoom")  # Debug: print event name
             highlight_log(f"💎 **Loot Room Alert**: Someone is in a Loot Room", 'yellow')
-            flash_icon("TransitDungeonRewardRoom", icon_positions)
-            play_sound("reward_room")  # Play sound for loot room
+            flash_icon("Orb_TransitDungeonRewardRoom", obituary_icon_positions)
+            play_sound("reward_room")  # Play sound for reward room alert
+
+        # Handle each elevator type using simple if statements
+        if "TransitDungeonSideEntrance" in line:
+            print("Event: TransitDungeonSideEntrance")  # Debug: print event name
+            highlight_log(f"🚪 **Side Entrance Alert**: Someone is at the Side Entrance", 'red')
+            flash_icon("Orb_TransitDungeonSideEntrance", obituary_icon_positions)
+            play_sound("side_main")
+
+        if "TransitDungeonMainEntrance" in line:
+            print("Event: TransitDungeonMainEntrance")  # Debug: print event name
+            highlight_log(f"🚪 **Main Entrance Alert**: Someone is at the Main Entrance", 'red')
+            flash_icon("Orb_TransitDungeonMainEntrance", obituary_icon_positions)
+            play_sound("side_main")
+
+        if "TransitDungeonMaintenance" in line:
+            print("Event: TransitDungeonMaintenance")  # Debug: print event name
+            highlight_log(f"🚪 **Maintenance Alert**: Someone is at the Maintenance Entrance", 'orange')
+            flash_icon("Orb_TransitDungeonMaintenance_1", obituary_icon_positions)
+            play_sound("side_main")
+
+        # Handle Obituary Entrance Elevators
+        if "TransitManager_Maintenance" in line:
+            print("Event: TransitManager_Maintenance")
+            highlight_log(f"🚪 **Obituary Maintenance Alert**: Someone is at the Maintenance Elevator", 'orange')
+            flash_icon("Orb_TransitDungeonMaintenance", obituary_icon_positions)
+            play_sound("side_main")
+
+        if "TransitManager_DungeonEntranceA_" in line:
+            print("Event: TransitManager_DungeonEntranceA_")
+            highlight_log(f"🚪 **Obituary Dungeon Entrance A Alert**: Someone is at Dungeon Entrance A", 'red')
+            flash_icon("Orb_TransitDungeonEntranceA", obituary_icon_positions)
+            play_sound("side_main")
+
+        if "TransitManager_DungeonEntranceB" in line:
+            print("Event: TransitManager_DungeonEntranceB")
+            highlight_log(f"🚪 **Obituary Dungeon Entrance B Alert**: Someone is at Dungeon Entrance B", 'red')
+            flash_icon("Orb_TransitDungeonEntranceB", obituary_icon_positions)
+            play_sound("side_main")
+
+        if "TransitManager_DungeonEntranceC" in line:
+            print("Event: TransitManager_DungeonEntranceC")
+            highlight_log(f"🚪 **Obituary Dungeon Entrance C Alert**: Someone is at Dungeon Entrance C", 'red')
+            flash_icon("Orb_TransitDungeonEntranceC", obituary_icon_positions)
+            play_sound("side_main")
 
 # Function to flash icons on the map for specific events
 def flash_icon(event_name, icon_positions):
@@ -480,7 +541,7 @@ def handle_checkmate():
 
     # Draw the icons on the canvas at fixed positions
     icons = {}
-    for name, (x, y, color) in icon_positions.items():
+    for name, (x, y, color) in checkmate_icon_positions.items():
         icons[name] = canvas.create_oval(x-10, y-10, x+10, y+10, fill=color, outline="white", width=2)
 
     checkmate_button.config(state=tk.DISABLED)  # Disable the button after use
@@ -493,7 +554,47 @@ def handle_checkmate():
         checkmate_window.destroy()  # Use destroy instead of close
         checkmate_button.config(state=tk.NORMAL)  # Re-enable the button
         update_status("Checkmate window closed.")
+
+def handle_obituary():
+    """Handle the action when the Obituary button is clicked."""
+    update_status("Obituary Selected")
     
+    global obituary_window, canvas, icons, map_photo
+    obituary_window = tk.Toplevel(root)
+    obituary_window.title("Obituary View")
+    obituary_window.geometry("800x600")  # Fixed size
+    obituary_window.configure(bg="#1e1e1e")
+    obituary_window.resizable(False, False)  # Lock the window size to prevent resizing
+
+    # Load the obituary map image
+    map_image_path = get_resource_path("Star_Citizen_Contested_Zones_Orbituary_Map.jpg")
+    print(f"Loading image from: {map_image_path}")
+    map_image = Image.open(map_image_path).resize((800, 600), Image.Resampling.LANCZOS)
+    map_photo = ImageTk.PhotoImage(map_image)
+
+    # Create canvas and draw image
+    canvas = tk.Canvas(obituary_window, width=800, height=600)
+    canvas.pack(fill=tk.BOTH, expand=True)
+    
+    # Use create_image to add the image to the canvas
+    canvas.create_image(400, 300, anchor=tk.CENTER, image=map_photo)  # Center the image
+
+    # Draw the icons on the canvas at fixed positions for the Obituary map
+    icons = {}
+    for name, (x, y, color) in obituary_icon_positions.items():
+        icons[name] = canvas.create_oval(x-10, y-10, x+10, y+10, fill=color, outline="white", width=2)
+
+    obituary_button.config(state=tk.DISABLED)  # Disable the button after use
+    
+    # Re-enable the button after a delay
+    obituary_window.protocol("WM_DELETE_WINDOW", lambda: on_obituary_close())
+    
+    def on_obituary_close():
+        """Handle the action when the Obituary window is closed."""
+        obituary_window.destroy()  # Use destroy instead of close
+        obituary_button.config(state=tk.NORMAL)  # Re-enable the button
+        update_status("Obituary window closed.")
+
 # Initialize GUI with dark mode
 root = tk.Tk()
 root.title("BlightVeil Log Parser")
@@ -548,6 +649,11 @@ stop_button.config(state=tk.DISABLED)  # Initially disable the Stop button
 checkmate_button = tk.Button(root, text="Open Checkmate Map", command=handle_checkmate, bg="#4CAF50", fg="white")
 checkmate_button.pack(pady=5)
 checkmate_button.config(state=tk.DISABLED)  # Enable the button
+
+# Button to open the Obituary map below the other buttons
+obituary_button = tk.Button(root, text="Open Obituary Map", command=handle_obituary, bg="#FF5722", fg="white")
+obituary_button.pack(pady=5)
+obituary_button.config(state=tk.DISABLED)  # Enable the button initially
 
 root.protocol("WM_DELETE_WINDOW", on_closing)  # Ensure we handle the window close event
 
