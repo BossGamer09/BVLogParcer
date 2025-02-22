@@ -283,6 +283,12 @@ def parse_kill_line(line, flash_icon, icon_positions):
                 if actor_name == "PU_Human" and killer_name == "PU_Human":
                     # Ignore this case (no logging)
                     continue
+                if actor_name == "Kopion" and killer_name != "PU_Human":
+                    #Ignore this case (no logging)
+                    continue
+                if killer_name == "PU_Human" and actor_name != "Kopion":
+                    # Ignore this case (no logging)
+                    continue
                 else:
                     # Log the event if PU_Human is involved but not killing another PU_Human
                     print(f"Captured kill: {actor_name} ({actor_id}) killed by {killer_name} ({killer_id}) using {weapon} with damage type {damage_type} in zone {zone}")
