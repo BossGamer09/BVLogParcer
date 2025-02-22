@@ -407,6 +407,7 @@ def start_monitoring(flash_icon=None, icon_positions=None):
             # Enable the buttons once everything is set up
             stop_button.config(state=tk.NORMAL)     # Enable the Stop button
             checkmate_button.config(state=tk.NORMAL)  # Enable the Checkmate button
+            obituary_button.config(state=tk.NORMAL)  # Enable the Obituary button
         else:
             messagebox.showerror("Error", "Game.log not found.")
             start_button.config(state=tk.NORMAL)  # Re-enable Start button
