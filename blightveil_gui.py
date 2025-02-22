@@ -468,20 +468,21 @@ def get_version_file(file_name, url):
         return get_version_url(url)
 
 def play_sound(sound_type, volume=1.0):
-    # Check if the Checkmate window is open before playing the sound
-    if checkmate_window.winfo_exists():
+    checkmate_exists = "checkmate_window" in globals() and checkmate_window.winfo_exists()
+    obituary_exists = "obituary_window" in globals() and obituary_window.winfo_exists()
+
+    # Only play sound if either window exists
+    if checkmate_exists or obituary_exists:
+        sound_path = None
+
         if sound_type == "side_main":
             sound_path = get_resource_path("doorbell-1.wav")
-            sound = pygame.mixer.Sound(sound_path)
-            sound.set_volume(volume)
-            sound.play()
         elif sound_type == "reward_room":
             sound_path = get_resource_path("ALARM_BUZZ_bbi.wav")
-            sound = pygame.mixer.Sound(sound_path)
-            sound.set_volume(volume)
-            sound.play()
         elif sound_type == "actor_death":
             sound_path = get_resource_path("Wasted.wav")
+
+        if sound_path:
             sound = pygame.mixer.Sound(sound_path)
             sound.set_volume(volume)
             sound.play()
